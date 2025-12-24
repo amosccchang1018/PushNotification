@@ -1,0 +1,132 @@
+########################################
+# Python
+########################################
+
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+*.pyd
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Python virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# uv
+.uv/
+.uv-cache/
+.uv-sync.json
+
+# Python test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+########################################
+# Project runtime / local data
+########################################
+
+# Environment variables / secrets
+.env
+.env.*
+secrets.*
+*.key
+*.pem
+
+# Local runtime cache / debug output
+cache/
+tmp/
+temp/
+logs/
+*.log
+*.html
+*.json.bak
+
+########################################
+# Web scraping / HTTP debug
+########################################
+
+# Saved pages, responses, or raw payloads
+responses/
+snapshots/
+debug/
+*.http
+
+########################################
+# GitHub Actions / CI
+########################################
+
+# Local runner artifacts
+.artifacts/
+.actions/
+
+########################################
+# IDEs / Editors
+########################################
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# PyCharm / JetBrains
+.idea/
+*.iml
+
+########################################
+# OS files
+########################################
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+########################################
+# Git / misc
+########################################
+
+# Git merge backups
+*.orig
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+########################################
+# Allow important config files
+########################################
+
+# Do NOT ignore these
+!.python-version
+!pyproject.toml
+!README.md

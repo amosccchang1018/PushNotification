@@ -1,0 +1,16 @@
+[project]
+name = "push-notification"
+version = "0.1.0"
+description = "Daily push notification to Telegram via GitHub Actions."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+  "requests>=2.32.0",
+]
+
+[project.scripts]
+push-notify = "push_notification.main:main"
+
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"

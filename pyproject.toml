@@ -2,7 +2,7 @@
 name = "push-notification"
 version = "0.1.0"
 description = "Daily push notification to Telegram via GitHub Actions."
-readme = "README.md"
+readme = "readme.md"
 requires-python = ">=3.13"
 dependencies = [
   "beautifulsoup4>=4.14.3",

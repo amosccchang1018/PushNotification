@@ -39,3 +39,9 @@ src/
 configs/
   sources.yaml                 # which sources enabled + params
 ```
+
+
+When run the command in GitHub Action, remember
+```
+uv run playwright install --with-deps chromium
+```

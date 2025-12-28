@@ -1,5 +1,8 @@
 # PushNotification
 
+![Telegram daily weather notification](https://myppt.cc/A7PKv)
+
+
 A Python-based automation pipeline that **collects weather information from multiple Dutch sources and delivers a daily, formatted digest to Telegram**, executed automatically via **GitHub Actions**.
 
 This project is designed as a **production-grade automation pipeline**, not a one-off script.

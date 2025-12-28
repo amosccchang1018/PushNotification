@@ -1,6 +1,6 @@
 # PushNotification
 
-![Telegram daily weather notification](https://myppt.cc/A7PKv)
+![Telegram daily weather digest](docs/images/telegram_preview.png)
 
 
 A Python-based automation pipeline that **collects weather information from multiple Dutch sources and delivers a daily, formatted digest to Telegram**, executed automatically via **GitHub Actions**.

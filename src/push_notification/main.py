@@ -1,26 +1,43 @@
 # src/push_notification/main.py
 from push_notification.sources.weeronline import WeeronlineNetherlandsReport
 from push_notification.notifiers.telegram import TelegramNotifier
+from push_notification.sources.knmi import KNMINetherlandsForecast
+from push_notification.formatters.default import DefaultFormatter
+from push_notification.config import load_sources_config
+from push_notification.sources import SOURCE_REGISTRY
+
+CONFIG_PATH = "configs/sources.yaml"
 
 
 def main() -> None:
-    src = WeeronlineNetherlandsReport()
-    forecast = src.fetch()
+    sources_cfg = load_sources_config(CONFIG_PATH)
 
-    # Check fetched forecast
-    print(forecast.headline)
-    print(forecast.published_at)
-    print(forecast.summary)
+    formatter = DefaultFormatter()
+    notifier = TelegramNotifier.from_env()
 
-    # push forcast notification to Telegram
-    msg = (
-        f"{forecast.title}\n"
-        f"{forecast.headline}\n\n"
-        f"{forecast.summary}\n\n"
-        f"{forecast.url}"
-    )
+    messages: list[str] = []
 
-    TelegramNotifier.from_env().send_message(msg)
+    for cfg in sources_cfg:
+        if not cfg.get("enabled", False):
+            continue
+
+        name = cfg["name"]
+        url = cfg["url"]
+
+        if name not in SOURCE_REGISTRY:
+            raise RuntimeError(f"Unknown source: {name}")
+
+        source_cls = SOURCE_REGISTRY[name]
+        source = source_cls(url=url)
+
+        forecast = source.fetch()
+        messages.append(formatter.format(forecast))
+
+    if not messages:
+        return
+
+    separator = "\n\n" + ("-" * 20) + "\n\n"
+    notifier.send_message(separator.join(messages))
 
 
 if __name__ == "__main__":

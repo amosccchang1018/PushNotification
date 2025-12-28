@@ -1,0 +1,53 @@
+name: Daily Telegram Push
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # 06:00 UTC (08:00 CEST)
+    - cron: "0 7 * * *" # 07:00 UTC (08:00 CET)
+  workflow_dispatch:
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Sync Python deps (uv.lock)
+        run: |
+          uv sync --frozen
+
+      - name: Gate by Europe/Amsterdam 08:00
+        run: |
+          uv run python - <<'PY'
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+
+          now = datetime.now(ZoneInfo("Europe/Amsterdam"))
+          if not (now.hour == 8 and now.minute == 0):
+              print(f"Skip: local time is {now.isoformat(timespec='seconds')}")
+              raise SystemExit(0)
+
+          print(f"Proceed: local time is {now.isoformat(timespec='seconds')}")
+          PY
+
+      # Playwright on Ubuntu: install Chromium + system deps
+      - name: Install Playwright Chromium
+        run: |
+          uv run playwright install --with-deps chromium
+
+      - name: Run push pipeline
+        env:
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        run: |
+          uv run python -m push_notification.main

@@ -4,7 +4,10 @@ from push_notification.models import Forecast
 
 
 class BaseSource(ABC):
+    def __init__(self, *, name: str, url: str) -> None:
+        self.name = name
+        self.url = url
+
     @abstractmethod
     def fetch(self) -> Forecast:
-        """Fetch and parse a Forecast from a source."""
         raise NotImplementedError

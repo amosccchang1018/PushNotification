@@ -6,11 +6,12 @@ from typing import Optional
 from playwright.sync_api import sync_playwright, TimeoutError as PwTimeoutError
 
 from push_notification.models import Forecast
+from push_notification.sources.base import BaseSource
 
 
-class WeeronlineNetherlandsReport:
-    NAME = "weeronline"
-    URL = "https://www.weeronline.nl/weerbericht-nederland"
+class WeeronlineNetherlandsReport(BaseSource):
+    def __init__(self, *, url: str) -> None:
+        super().__init__(name="weeronline", url=url)
 
     def fetch(self) -> Forecast:
         title = "Weerbericht Nederland"
@@ -28,7 +29,7 @@ class WeeronlineNetherlandsReport:
             page = context.new_page()
 
             try:
-                page.goto(self.URL, wait_until="domcontentloaded", timeout=30_000)
+                page.goto(self.url, wait_until="domcontentloaded", timeout=30_000)
                 page.wait_for_timeout(1200)
             except PwTimeoutError:
                 browser.close()
@@ -54,8 +55,8 @@ class WeeronlineNetherlandsReport:
             raise RuntimeError("Weeronline: cannot find summary paragraph (p).")
 
         return Forecast(
-            source=self.NAME,
-            url=self.URL,
+            source=self.name,
+            url=self.url,
             title=title,
             headline=headline,
             published_at=published_at,

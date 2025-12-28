@@ -1,0 +1,8 @@
+sources:
+  - name: weeronline
+    enabled: true
+    url: https://www.weeronline.nl/weerbericht-nederland
+
+  - name: knmi
+    enabled: true
+    url: https://www.knmi.nl/nederland-nu/weer/verwachtingen

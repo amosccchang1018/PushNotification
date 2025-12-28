@@ -247,3 +247,19 @@ This step is mandatory on GitHub Actions.
 * `uv.lock` must be committed for reproducible CI runs
 
 * Linux runners are case-sensitive (`README.md` ≠ `readme.md`)
+
+## Author
+
+**ChiChun Chang**
+
+- LinkedIn: https://www.linkedin.com/in/ccchang1018/
+- GitHub: https://github.com/amosccchang1018
+
+
+## License
+
+This project is licensed under the **MIT License**.
+
+Copyright (c) 2025 ChiChun Chang
+
+See the [LICENSE](LICENSE) file for details.

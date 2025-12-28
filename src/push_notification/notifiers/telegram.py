@@ -51,7 +51,7 @@ class TelegramNotifier:
         self,
         text: str,
         *,
-        parse_mode: Optional[str] = None,  # "MarkdownV2" or "HTML"
+        parse_mode: str = "HTML",
         disable_web_page_preview: bool = True,
         reply_to_message_id: Optional[int] = None,
     ) -> None:
@@ -71,6 +71,7 @@ class TelegramNotifier:
             "chat_id": self._config.chat_id,
             "text": text,
             "disable_web_page_preview": disable_web_page_preview,
+            "parse_mode": parse_mode,
         }
         if parse_mode:
             payload["parse_mode"] = parse_mode

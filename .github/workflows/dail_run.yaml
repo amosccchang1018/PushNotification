@@ -5,9 +5,13 @@ permissions:
 
 on:
   schedule:
-    - cron: "0 6 * * *" # 06:00 UTC (08:00 CEST)
-    - cron: "0 7 * * *" # 07:00 UTC (08:00 CET)
+    - cron: "0 19 * * *" # 19:00 UTC = 21:00 CEST (summer time)
+    - cron: "0 20 * * *" # 20:00 UTC = 21:00 CET  (winter time)
   workflow_dispatch:
+
+concurrency:
+  group: daily-telegram-push
+  cancel-in-progress: false
 
 jobs:
   run:
@@ -29,21 +33,22 @@ jobs:
         run: |
           uv sync --frozen
 
-      - name: Gate by Europe/Amsterdam 08:00
+      - name: Gate by Europe/Amsterdam 21:00 (hour window)
         run: |
           uv run python - <<'PY'
           from datetime import datetime
           from zoneinfo import ZoneInfo
 
           now = datetime.now(ZoneInfo("Europe/Amsterdam"))
-          if not (now.hour == 8 and now.minute == 0):
+
+          # Allow any minute within 21:00–21:59 local time
+          if now.hour != 21:
               print(f"Skip: local time is {now.isoformat(timespec='seconds')}")
               raise SystemExit(0)
 
           print(f"Proceed: local time is {now.isoformat(timespec='seconds')}")
           PY
 
-      # Playwright on Ubuntu: install Chromium + system deps
       - name: Install Playwright Chromium
         run: |
           uv run playwright install --with-deps chromium

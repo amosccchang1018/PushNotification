@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "PR Review Follow-Up"
+  short_description: "Address review comments on your own PR"
+  default_prompt: "Use $pr-review-follow-up to help me respond to review comments on my pull request."

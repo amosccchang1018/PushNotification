@@ -2,151 +2,78 @@
 
 ![Telegram daily weather digest](docs/images/telegram_preview.png)
 
+PushNotification is a small Python automation project that collects daily weather updates from Dutch sources, formats them into a single Telegram message, and sends that digest on a schedule through GitHub Actions.
 
-A Python-based automation pipeline that **collects weather information from multiple Dutch sources and delivers a daily, formatted digest to Telegram**, executed automatically via **GitHub Actions**.
+The codebase is intentionally structured as a pipeline rather than a one-off script, so sources, formatting, and delivery can evolve independently.
 
-This project is designed as a **production-grade automation pipeline**, not a one-off script.
+## What It Does
 
----
+- Fetches weather summaries from multiple Dutch sources
+- Normalizes each result into a shared forecast model
+- Formats the output as Telegram-friendly HTML
+- Sends one combined message through the Telegram Bot API
+- Runs automatically on GitHub Actions every day
 
-## Key Features
+## Current Sources
 
-- **Config-driven sources** — enable/disable data sources without changing code
-- **Modular architecture** — clean separation of fetching, formatting, and notification
-- **Playwright-based scraping** — reliable against JS-rendered pages and bot protection
-- **Daylight-saving–safe scheduling** — guaranteed once per day at local time
-- **Reproducible builds** — locked dependencies via `uv.lock`
-- **CI-native execution** — runs entirely on GitHub Actions (Linux)
+- `weeronline`
+- `knmi`
 
----
+Both are configured in [configs/sources.yaml](/d:/Repositories/PushNotification/configs/sources.yaml).
 
 ## Tech Stack
 
-- **Language**: Python 3.12+
-- **Dependency Management**: [`uv`](https://github.com/astral-sh/uv)
-- **Web Automation / Scraping**: Playwright (Chromium)
-- **CI/CD**: GitHub Actions (cron-based scheduling)
-- **Notification Channel**: Telegram Bot API
+- Python 3.13+
+- [`uv`](https://github.com/astral-sh/uv) for dependency management
+- Playwright for browser automation and scraping
+- Requests for HTTP calls
+- GitHub Actions for scheduling and execution
+- Telegram Bot API for delivery
 
----
+## Project Layout
 
-## Python Version
-
-The project pins the Python version using `.python-version`.
-
-Recommended:
-
-Python 3.12.x
-
-GitHub Actions will automatically install the pinned version via `uv`.
-
----
-
-## Dependency Management (uv)
-
-This project uses **uv** instead of pip/poetry.
-
-Key files:
-
-- `pyproject.toml` — dependency definitions
-- `uv.lock` — locked, reproducible dependency versions
-
-### Local setup
-
-```bash
-uv venv
-uv sync
-```
-
-CI usage (GitHub Actions)
-
-```bash
-uv sync --frozen
-```
-
----
-
-Repository Structure
-High-level
-
-```css
+```text
 PushNotification/
-  src/
-    push_notification/
-      main.py
   configs/
     sources.yaml
+  src/
+    push_notification/
+      config.py
+      http.py
+      main.py
+      models.py
+      formatters/
+        default.py
+      notifiers/
+        telegram.py
+      sources/
+        __init__.py
+        base.py
+        knmi.py
+        weeronline.py
+  .github/
+    workflows/
+      dail_run.yaml
   pyproject.toml
   uv.lock
   README.md
-  .github/
-    workflows/
-      daily_telegram_push.yml
 ```
 
-Detailed Structure
+## How The Pipeline Works
 
-```css
-src/
-  push_notification/
-    __init__.py
-    main.py                    # Pipeline orchestration
-    models.py                  # Shared dataclasses (e.g. Forecast)
-    http.py                    # Shared HTTP utilities
-
-    sources/                   # Website-specific extractors
-      __init__.py
-      base.py                  # BaseSource interface
-      weeronline.py            # Weeronline (Playwright)
-      knmi.py                  # KNMI (Playwright)
-
-    formatters/
-      __init__.py
-      default.py               # HTML-based Telegram formatter
-
-    notifiers/
-      __init__.py
-      telegram.py              # Telegram Bot API sender
-
-configs/
-  sources.yaml                 # Enabled sources and parameters
+```text
+Configured source
+  -> source fetcher
+  -> shared forecast model
+  -> Telegram formatter
+  -> Telegram notifier
 ```
 
----
+The entry point is [src/push_notification/main.py](/d:/Repositories/PushNotification/src/push_notification/main.py). It loads enabled sources from config, fetches each report, formats the results, and sends a single combined Telegram message.
 
-Pipeline Overview
+## Configuration
 
-```scss
-Website(s)
-   ↓
-Source Extractor (Playwright / HTTP)
-   ↓
-Normalized Data Model (Forecast)
-   ↓
-Formatter (HTML for Telegram)
-   ↓
-Telegram Bot API
-```
-
-Each layer is isolated:
-
-- Adding a new website = add a new file under sources/
-
-- Changing message format = modify or add a formatter
-
-- Notification channel is abstracted (Telegram now, others later)
-
----
-
-### Configuring Data Sources
-
-Data sources are defined in:
-
-```bash
-configs/sources.yaml
-```
-
-Example (conceptual):
+Source configuration lives in [configs/sources.yaml](/d:/Repositories/PushNotification/configs/sources.yaml):
 
 ```yaml
 sources:
@@ -157,161 +84,79 @@ sources:
   - name: knmi
     enabled: true
     url: https://www.knmi.nl/nederland-nu/weer/verwachtingen
-
 ```
 
-Only enabled sources are executed. Each source must have a corresponding extractor class.
+Each enabled source must exist in `SOURCE_REGISTRY` inside [src/push_notification/sources/__init__.py](/d:/Repositories/PushNotification/src/push_notification/sources/__init__.py).
 
----
+## Local Setup
 
-### Telegram Setup
+```bash
+uv venv
+uv sync
+```
 
-#### Required Secrets
-
-The pipeline sends messages via a Telegram bot. You must configure two secrets in GitHub:
-
-| Secret Name  | Name Description |
-| ------------- |:-------------:|
-|`TG_BOT_TOKEN`|Telegram Bot API token|
-|`TG_CHAT_ID`|Chat ID (group or private)|
-
-⚠️ Do not wrap values in quotes.
-Store raw values only.
-
-### Local testing
+Set the required environment variables before running locally:
 
 ```bash
 export TG_BOT_TOKEN=123456:ABC...
 export TG_CHAT_ID=-1001234567890
+```
 
+Then run:
+
+```bash
 uv run python -m push_notification.main
 ```
 
----
+## Required Secrets
 
-### GitHub Actions (Daily Run)
+GitHub Actions expects these repository secrets:
 
-#### Workflow Location
+| Secret | Purpose |
+| --- | --- |
+| `TG_BOT_TOKEN` | Telegram Bot API token |
+| `TG_CHAT_ID` | Target chat or group ID |
 
-```bash
-.github/workflows/daily_telegram_push.yml
-```
+Store raw values only. Do not wrap them in quotes.
 
-GitHub Actions **only reads workflows from this directory.**
+## GitHub Actions Schedule
 
----
+The workflow lives at [.github/workflows/dail_run.yaml](/d:/Repositories/PushNotification/.github/workflows/dail_run.yaml).
 
-### Scheduling Logic (Netherlands Time)
-
-#### GitHub Actions cron uses UTC only, so this project uses a dual-cron + runtime gate strategy
+GitHub Actions cron runs in UTC, so the workflow uses two schedule entries and a runtime time-zone gate for `Europe/Amsterdam`:
 
 ```yaml
 schedule:
-  - cron: "0 6 * * *" # 08:00 CEST
-  - cron: "0 7 * * *" # 08:00 CET
+  - cron: "0 19 * * *" # 21:00 CEST
+  - cron: "0 20 * * *" # 21:00 CET
 ```
 
-At runtime, the job checks:
+At runtime, the job checks whether the local Amsterdam hour is `21`. That keeps the daily run aligned with local time across daylight saving changes.
 
-```python
-Europe/Amsterdam local time == 08:00
-```
+## Playwright Note
 
-This ensures:
-
-- Exactly **one execution per day**
-
-- Automatic handling of **daylight saving time**
-
----
-
-### Playwright Requirement (Important)
-
-Because this project uses Playwright on Linux runners, the workflow must install browser dependencies:
+The CI workflow installs Chromium with Playwright before running the pipeline:
 
 ```bash
 uv run playwright install --with-deps chromium
 ```
 
-This step is mandatory on GitHub Actions.
+This is required for the scraper sources used in the project.
 
----
+## Extending The Project
 
-### Running the Workflow
+- Add a new source under `src/push_notification/sources/`
+- Register it in `SOURCE_REGISTRY`
+- Add its config entry to `configs/sources.yaml`
+- Adjust formatting in `src/push_notification/formatters/default.py` if needed
+- Add more notifiers later if delivery needs to expand beyond Telegram
 
-#### Manual run (recommended for testing)
+## Known Limitations
 
-1. GitHub → Actions
-
-2. Select Daily Telegram Push
-
-3. Click Run workflow
-
-4. Choose branch: `master`
-
-#### Scheduled run
-
-- Runs automatically every day at **08:00 (Europe/Amsterdam)**
-
-- No UI interaction required
-
----
-
-### Branching & Safety
-
-- Only the default branch (`master`) is scheduled
-
-- Other branches do not trigger workflows
-
-- Secrets are injected only at runtime via GitHub Actions
-
----
-
-### Extending the Project
-
-Common extensions:
-
-- Add new sources under sources/
-
-- Customize message layout via additional formatters
-
-- Route different sources to different Telegram chats
-
-- Add alert logic (e.g. KNMI warnings only)
-
-The architecture is intentionally designed for incremental growth.
-
----
-
-### Known Limitations
-
-- Telegram messages are limited to 4096 characters (long summaries may need splitting)
-
-- DOM changes on source websites may require extractor updates
-
-- Only Telegram is supported as a notification channel (by design)
-
----
-
-### Notes
-
-- `.github/workflows/*.yml` files are authoritative; deleting a workflow file immediately stops its schedule
-
-- `uv.lock` must be committed for reproducible CI runs
-
-- Linux runners are case-sensitive (`README.md` ≠ `readme.md`)
-
-## Author
-
-**ChiChun Chang**
-
-- LinkedIn: <https://www.linkedin.com/in/ccchang1018/>
-- GitHub: <https://github.com/amosccchang1018>
+- Source website markup can change and break scrapers
+- Telegram message length is limited
+- The current notifier targets Telegram only
 
 ## License
 
-This project is licensed under the **MIT License**.
-
-Copyright (c) 2025 ChiChun Chang
-
-See the [LICENSE](LICENSE) file for details.
+MIT. See [LICENSE](/d:/Repositories/PushNotification/LICENSE).

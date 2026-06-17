@@ -1,0 +1,91 @@
+name: PR Review Flow
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Review Workflow Notes
+        run: |
+          echo "This workflow is a template for your skill-driven PR review flow."
+          echo ""
+          echo "Expected behavior:"
+          echo "1. Review the PR using the external PR review skill."
+          echo "2. Log the PR into D:\Repositories\PushNotification\PRhistory.md using the PR logger skill."
+          echo "3. Post review feedback when new findings exist."
+          echo ""
+          echo "Skill files to include in the repository or mount into the agent runtime:"
+          echo "- github-review-coach/SKILL.md"
+          echo "- external-pr-review/SKILL.md"
+          echo "- pr-readme-logger/SKILL.md"
+          echo "- pr-readme-logger/agents/openai.yaml"
+          echo "- external-pr-review/agents/openai.yaml"
+          echo ""
+          echo "Optional related skills:"
+          echo "- pr-readiness-review/SKILL.md"
+          echo "- pr-review-follow-up/SKILL.md"
+
+      - name: Ensure PR history file exists
+        shell: bash
+        run: |
+          touch PRhistory.md
+
+      - name: Log PR in PRhistory.md
+        shell: bash
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_USER: ${{ github.event.pull_request.user.login }}
+          PR_DATE: ${{ github.event.pull_request.created_at }}
+        run: |
+          DATE_ONLY="${PR_DATE%%T*}"
+          DESC="$(printf '%s' "${PR_BODY:-}" | head -n 1)"
+          if [ -z "$DESC" ]; then
+            DESC="$PR_TITLE"
+          fi
+          LINE="$PR_TITLE - $DATE_ONLY: $DESC - $PR_USER"
+          if ! grep -Fqx "$LINE" PRhistory.md; then
+            printf '%s\n' "$LINE" >> PRhistory.md
+          fi
+
+      - name: Commit PR history update
+        shell: bash
+        run: |
+          if git diff --quiet -- PRhistory.md; then
+            echo "No PR history change."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add PRhistory.md
+          git commit -m "Log PR #${{ github.event.pull_request.number }} in PRhistory"
+          git push
+
+      - name: Agent Review Placeholder
+        run: |
+          echo "Replace this step with your actual agent or API invocation."
+          echo "That runner should load the following skills:"
+          echo "  - github-review-coach/SKILL.md"
+          echo "  - external-pr-review/SKILL.md"
+          echo "  - pr-readme-logger/SKILL.md"
+          echo ""
+          echo "Suggested routing:"
+          echo "  - Generic requests -> github-review-coach"
+          echo "  - PR review requests -> external-pr-review"
+          echo "  - PR logging -> pr-readme-logger"

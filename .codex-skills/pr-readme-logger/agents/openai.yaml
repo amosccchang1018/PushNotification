@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "PR README Logger"
+  short_description: "Log each new PR in PRhistory.md"
+  default_prompt: "Use $pr-readme-logger to record a newly created pull request in D:\\Repositories\\PushNotification\\PRhistory.md."
